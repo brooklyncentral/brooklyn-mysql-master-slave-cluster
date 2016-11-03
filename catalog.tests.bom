@@ -1,0 +1,79 @@
+brooklyn.catalog:
+  items:
+  - "https://raw.githubusercontent.com/brooklyncentral/common-catalog-utils/master/common-tests/src/main/resources/commontests/common.tests.bom"
+  - id: brooklyn-mysql-master-slave-cluster-tests
+    version: 0.10.0-SNAPSHOT
+    itemType: template
+    iconUrl: http://www.mysql.com/common/logos/mysql-logo.svg
+    name: MySQL Master Slave Cluster Tests
+    item:
+      services:
+      - type: brooklyn-mysql-master-slave-cluster
+        id: target-cluster
+        firstMemberSpec:
+          $brooklyn:entitySpec:
+            type: org.apache.brooklyn.entity.database.mysql.MySqlNode
+            name: MySql Master
+            defaultDisplayName: MySql Master
+            brooklyn.config:
+              mysql.server_id: 1
+              mysql.template.configuration.url: classpath:///org/apache/brooklyn/entity/database/mysql/mysql_master.conf
+              id: master-node
+              camp.plan.id: master-node
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: MySQL Master Slave Cluster Tests
+        brooklyn.config:
+          timeout: 1h
+          timeout.initialStartup: 1h
+          targetId: target-cluster
+        brooklyn.children:
+        - type: assert-up-and-running-initial
+          name: "01. MySQL Master Slave Cluster up and running"
+        - type: invoke-effector
+          name: "02. Resize cluster to 2"
+          target: $brooklyn:entity("target-cluster")
+          effector: resize
+          params:
+            desiredSize: 2
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: "03. Size of cluster increased to 2"
+          targetId: target-cluster
+          sensor: group.members.count
+          assert:
+            equals: 2
+        - type: invoke-effector
+          name: "04. Create Database"
+          target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
+          effector: executeScript
+          params:
+            commands: |
+              CREATE DATABASE temporary;
+              USE temporary;
+              CREATE TABLE users (name VARCHAR(20), owner VARCHAR(20), creation_date DATE, updated_date DATE);
+              INSERT INTO users VALUES ('mysql', 'mysql', CURDATE(), CURDATE())
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: "05. Check MySQL creating script has been executed"
+          runDir: $brooklyn:entity("master-node").attributeWhenReady("run.dir")
+          target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
+          command: $brooklyn:formatString("%s/bin/mysql --defaults-file=mymysql.cnf -N -e 'SELECT count(*) FROM users' temporary", $brooklyn:entity("master-node").attributeWhenReady("expandedinstall.dir"))
+          assertStatus:
+            equals: 0
+          assertOut:
+            equals: "1"
+          assertErr:
+            isEmpty: true
+        - type: org.apache.brooklyn.test.framework.TestCase
+          name: "06. Effector: change_password Tests"
+          brooklyn.children:
+          - type: org.apache.brooklyn.test.framework.TestEffector
+            name: "06 a. Invoke change_password Effector"
+            target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
+            effector: change_password
+            params:
+              password: myPassword
+          - type: org.apache.brooklyn.test.framework.TestSensor
+            name: "06 b. Check MySQL password has changed"
+            target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
+            sensor: mysql.password
+            assert:
+            - equals: myPassword
