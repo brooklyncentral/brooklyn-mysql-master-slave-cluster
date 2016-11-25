@@ -23,6 +23,7 @@ brooklyn.catalog:
   description: Sets up a cluster of MySQL nodes using master-slave relation and binary logging
   itemType: template
   license: Apache-2.0
+  iconUrl: http://www-jp.mysql.com/common/logos/mysql-logo.svg
   publish:
     license_code: Apache-2.0
     reference: reference.json
