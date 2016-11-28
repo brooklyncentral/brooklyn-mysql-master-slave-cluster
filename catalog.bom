@@ -33,6 +33,3 @@ brooklyn.catalog:
       label: Initial Size
       type: integer
       default: 2
-    services:
-    - type: org.apache.brooklyn.entity.database.mysql.MySqlCluster
-      name: MySQL Master Slave Cluster
