@@ -1,6 +1,6 @@
 brooklyn.catalog:
   items:
-  - "https://raw.githubusercontent.com/brooklyncentral/common-catalog-utils/master/common-tests/src/main/resources/commontests/common.tests.bom"
+  - https://raw.githubusercontent.com/brooklyncentral/common-catalog-utils/master/common-tests/src/main/resources/commontests/common.tests.bom
   - id: brooklyn-mysql-master-slave-cluster-tests
     version: 0.10.0-SNAPSHOT
     itemType: template
@@ -42,13 +42,11 @@ brooklyn.catalog:
                 USE temporary;
                 CREATE TABLE users (name VARCHAR(20), owner VARCHAR(20), creation_date DATE, updated_date DATE);
                 INSERT INTO users VALUES ('mysql', 'mysql', CURDATE(), CURDATE())
-          - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          - type: test-ssh-succeeds
             name: "2.2. Check MySQL creating script has been executed"
             runDir: $brooklyn:entity("master-node").attributeWhenReady("run.dir")
             target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
             command: $brooklyn:formatString("%s/bin/mysql --defaults-file=mymysql.cnf -ss -e 'SELECT count(*) FROM users' temporary", $brooklyn:entity("master-node").attributeWhenReady("expandedinstall.dir"))
-            assertStatus:
-              equals: 0
             assertOut:
               equals: "1"
             assertErr:
@@ -62,19 +60,17 @@ brooklyn.catalog:
             effector: resize
             params:
               desiredSize: 3
-          - type: org.apache.brooklyn.test.framework.TestSensor
+          - type: assert-sensor
             name: "3.2. Size of cluster increased to 3"
             targetId: target-cluster
             sensor: group.members.count
             assert:
               equals: 3
-          - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          - type: test-ssh-succeeds
             name: "3.3. Master reports 2 slaves"
             runDir: $brooklyn:entity("master-node").attributeWhenReady("run.dir")
             target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
             command: $brooklyn:formatString("%s/bin/mysql --defaults-file=mymysql.cnf -ss -e 'SELECT COUNT(1) FROM information_schema.PROCESSLIST WHERE COMMAND = \"Binlog Dump\";'", $brooklyn:entity("master-node").attributeWhenReady("expandedinstall.dir"))
-            assertStatus:
-              equals: 0
             assertOut:
               equals: "2"
             assertErr:
@@ -85,13 +81,13 @@ brooklyn.catalog:
 #        - type: test-case
 #          name: "4. Effector Tests :: change_password"
 #          brooklyn.children:
-#          - type: org.apache.brooklyn.test.framework.TestEffector
+#          - type: invoke-effector
 #            name: "4.1. Invoke change_password Effector"
 #            target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
 #            effector: change_password
 #            params:
 #              password: myPassword
-#          - type: org.apache.brooklyn.test.framework.TestSensor
+#          - type: assert-sensor
 #            name: "4.2. Check MySQL password has changed"
 #            target: $brooklyn:entity("target-cluster").attributeWhenReady("cluster.first.entity")
 #            sensor: mysql.password
