@@ -24,7 +24,6 @@ brooklyn.catalog:
   iconUrl: http://www.mysql.com/common/logos/mysql-logo.svg
   itemType: template
   license: Apache-2.0
-  iconUrl: http://www-jp.mysql.com/common/logos/mysql-logo.svg
   publish:
     license_code: Apache-2.0
     reference: reference.json
