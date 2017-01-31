@@ -21,7 +21,7 @@ brooklyn.catalog:
   version: 0.10.0-SNAPSHOT
   name: MySql Master-Slave cluster
   description: Sets up a cluster of MySQL nodes using master-slave relation and binary logging
-  iconUrl: http://www.mysql.com/common/logos/mysql-logo.svg
+  iconUrl: https://www.mysql.com/common/logos/mysql-logo.svg
   itemType: template
   license: Apache-2.0
   publish:
