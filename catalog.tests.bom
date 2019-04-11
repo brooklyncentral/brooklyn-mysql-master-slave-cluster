@@ -20,6 +20,13 @@ brooklyn.catalog:
               mysql.template.configuration.url: classpath:///org/apache/brooklyn/entity/database/mysql/mysql_master.conf
               id: master-node
               camp.plan.id: master-node
+        memberSpec:
+          $brooklyn:entitySpec:
+            type: org.apache.brooklyn.entity.database.mysql.MySqlNode
+            name: MySql Slave
+            defaultDisplayName: MySql Slave
+            brooklyn.config:
+              start.timeout: 5m
       - type: test-case
         name: MySQL Master Slave Cluster Tests
         brooklyn.config:
